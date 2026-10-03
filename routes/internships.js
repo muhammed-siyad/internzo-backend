@@ -16,9 +16,11 @@ function verifyAdmin(req, res, next) {
             req.headers.authorization;
 
         if (!authHeader) {
+
             return res.status(401).json({
                 message: "Please login first"
             });
+
         }
 
         const token =
@@ -33,9 +35,11 @@ function verifyAdmin(req, res, next) {
             );
 
         if (decoded.role !== "admin") {
+
             return res.status(403).json({
                 message: "Admin access required"
             });
+
         }
 
         req.admin = decoded;
@@ -50,10 +54,12 @@ function verifyAdmin(req, res, next) {
         );
 
         return res.status(401).json({
-            message: "Invalid or expired token"
+            message:
+                "Invalid or expired token"
         });
 
     }
+
 }
 
 
@@ -80,23 +86,36 @@ router.post(
                 skills
             } = req.body;
 
+
             if (!company) {
+
                 return res.status(400).json({
-                    message: "Company ID is required"
+                    message:
+                        "Company ID is required"
                 });
+
             }
+
 
             if (!companyName) {
+
                 return res.status(400).json({
-                    message: "Company name is required"
+                    message:
+                        "Company name is required"
                 });
+
             }
 
+
             if (!title) {
+
                 return res.status(400).json({
-                    message: "Internship title is required"
+                    message:
+                        "Internship title is required"
                 });
+
             }
+
 
             const internship =
                 new Internship({
@@ -121,11 +140,14 @@ router.post(
 
                     skills,
 
-                    status: "Pending"
+                    status:
+                        "Pending"
 
                 });
 
+
             await internship.save();
+
 
             res.status(201).json({
 
@@ -144,7 +166,8 @@ router.post(
             );
 
             res.status(500).json({
-                message: "Server error"
+                message:
+                    "Server error"
             });
 
         }
@@ -165,12 +188,17 @@ router.get(
 
             const internships =
                 await Internship.find({
-                    status: "Approved"
+                    status:
+                        "Approved"
                 }).sort({
-                    createdAt: -1
+                    createdAt:
+                        -1
                 });
 
-            res.json(internships);
+
+            res.json(
+                internships
+            );
 
         } catch (error) {
 
@@ -180,7 +208,8 @@ router.get(
             );
 
             res.status(500).json({
-                message: "Server error"
+                message:
+                    "Server error"
             });
 
         }
@@ -202,16 +231,22 @@ router.get(
             const authHeader =
                 req.headers.authorization;
 
+
             if (!authHeader) {
+
                 return res.status(401).json({
-                    message: "Please login first"
+                    message:
+                        "Please login first"
                 });
+
             }
+
 
             const token =
                 authHeader.startsWith("Bearer ")
                     ? authHeader.substring(7)
                     : authHeader;
+
 
             const decoded =
                 jwt.verify(
@@ -219,14 +254,24 @@ router.get(
                     process.env.JWT_SECRET
                 );
 
+
             const internships =
                 await Internship.find({
-                    company: decoded.id
+
+                    company:
+                        decoded.id
+
                 }).sort({
-                    createdAt: -1
+
+                    createdAt:
+                        -1
+
                 });
 
-            res.json(internships);
+
+            res.json(
+                internships
+            );
 
         } catch (error) {
 
@@ -236,8 +281,10 @@ router.get(
             );
 
             res.status(401).json({
+
                 message:
                     "Invalid or expired token"
+
             });
 
         }
@@ -260,10 +307,14 @@ router.get(
             const internships =
                 await Internship.find()
                     .sort({
-                        createdAt: -1
+                        createdAt:
+                            -1
                     });
 
-            res.json(internships);
+
+            res.json(
+                internships
+            );
 
         } catch (error) {
 
@@ -273,7 +324,8 @@ router.get(
             );
 
             res.status(500).json({
-                message: "Server error"
+                message:
+                    "Server error"
             });
 
         }
@@ -297,37 +349,49 @@ router.put(
                 status
             } = req.body;
 
+
             if (
                 !status ||
-                !["Approved", "Rejected"]
-                    .includes(status)
+                ![
+                    "Approved",
+                    "Rejected"
+                ].includes(status)
             ) {
 
                 return res.status(400).json({
+
                     message:
                         "Invalid internship status"
+
                 });
 
             }
+
 
             const internship =
                 await Internship.findById(
                     req.params.id
                 );
 
+
             if (!internship) {
 
                 return res.status(404).json({
+
                     message:
                         "Internship not found"
+
                 });
 
             }
 
+
             internship.status =
                 status;
 
+
             await internship.save();
+
 
             res.json({
 
@@ -345,19 +409,27 @@ router.put(
                 error
             );
 
+
             if (
-                error.name === "CastError"
+                error.name ===
+                "CastError"
             ) {
 
                 return res.status(400).json({
+
                     message:
                         "Invalid internship ID"
+
                 });
 
             }
 
+
             res.status(500).json({
-                message: "Server error"
+
+                message:
+                    "Server error"
+
             });
 
         }
@@ -367,24 +439,7 @@ router.put(
 
 
 // ==================================================
-// TEST - CHECK INTERNSHIP ROUTE
-// ==================================================
-
-router.get(
-    "/test-delete-route",
-    (req, res) => {
-
-        res.json({
-            message:
-                "DELETE route file is loaded"
-        });
-
-    }
-);
-
-
-// ==================================================
-// ADMIN - TEMPORARY DELETE TEST
+// ADMIN - DELETE INTERNSHIP
 // ==================================================
 
 router.delete(
@@ -392,20 +447,97 @@ router.delete(
     verifyAdmin,
     async (req, res) => {
 
-        console.log(
-            "DELETE ROUTE REACHED:",
-            req.params.id
-        );
+        try {
 
-        res.json({
+            const internshipId =
+                req.params.id;
 
-            message:
-                "DELETE ROUTE IS WORKING",
 
-            internshipId:
-                req.params.id
+            console.log(
+                "DELETE INTERNSHIP REQUEST:",
+                internshipId
+            );
 
-        });
+
+            if (!internshipId) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Internship ID is required"
+
+                });
+
+            }
+
+
+            const internship =
+                await Internship.findById(
+                    internshipId
+                );
+
+
+            if (!internship) {
+
+                return res.status(404).json({
+
+                    message:
+                        "Internship not found"
+
+                });
+
+            }
+
+
+            await Internship.findByIdAndDelete(
+                internshipId
+            );
+
+
+            console.log(
+                "INTERNSHIP DELETED:",
+                internshipId
+            );
+
+
+            res.json({
+
+                message:
+                    "Internship removed successfully"
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "DELETE INTERNSHIP ERROR:",
+                error
+            );
+
+
+            if (
+                error.name ===
+                "CastError"
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid internship ID"
+
+                });
+
+            }
+
+
+            res.status(500).json({
+
+                message:
+                    "Server error"
+
+            });
+
+        }
 
     }
 );
