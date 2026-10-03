@@ -55,7 +55,10 @@ function verifyAdmin(req, res, next) {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "ADMIN AUTH ERROR:",
+            error
+        );
 
         return res.status(401).json({
             message: "Invalid or expired token"
@@ -221,7 +224,10 @@ router.post("/", async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "POST INTERNSHIP ERROR:",
+            error
+        );
 
 
         if (
@@ -278,7 +284,10 @@ router.get("/", async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "GET INTERNSHIPS ERROR:",
+            error
+        );
 
 
         res.status(500).json({
@@ -370,7 +379,27 @@ router.get(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "GET COMPANY INTERNSHIPS ERROR:",
+                error
+            );
+
+
+            if (
+                error.name ===
+                    "JsonWebTokenError" ||
+                error.name ===
+                    "TokenExpiredError"
+            ) {
+
+                return res.status(401).json({
+
+                    message:
+                        "Invalid or expired token"
+
+                });
+
+            }
 
 
             res.status(500).json({
@@ -417,7 +446,10 @@ router.get(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "ADMIN GET INTERNSHIPS ERROR:",
+                error
+            );
 
 
             res.status(500).json({
@@ -503,7 +535,127 @@ router.put(
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "UPDATE INTERNSHIP STATUS ERROR:",
+                error
+            );
+
+
+            if (
+                error.name ===
+                    "CastError"
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid internship ID"
+
+                });
+
+            }
+
+
+            res.status(500).json({
+
+                message:
+                    "Server error"
+
+            });
+
+        }
+
+    }
+);
+
+
+// ==================================================
+// ADMIN - DELETE / REMOVE INTERNSHIP
+// ==================================================
+
+router.delete(
+    "/admin/:id",
+    verifyAdmin,
+    async (req, res) => {
+
+        try {
+
+            const internshipId =
+                req.params.id;
+
+
+            // Check ID
+
+            if (!internshipId) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Internship ID is required"
+
+                });
+
+            }
+
+
+            // Find internship
+
+            const internship =
+                await Internship.findById(
+                    internshipId
+                );
+
+
+            if (!internship) {
+
+                return res.status(404).json({
+
+                    message:
+                        "Internship not found"
+
+                });
+
+            }
+
+
+            // Delete internship
+
+            await Internship.findByIdAndDelete(
+                internshipId
+            );
+
+
+            res.json({
+
+                message:
+                    "Internship removed successfully"
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "DELETE INTERNSHIP ERROR:",
+                error
+            );
+
+
+            // Invalid MongoDB ObjectId
+
+            if (
+                error.name ===
+                "CastError"
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid internship ID"
+
+                });
+
+            }
 
 
             res.status(500).json({
