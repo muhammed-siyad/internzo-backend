@@ -13,38 +13,61 @@ const router = express.Router();
 router.post("/apply", async (req, res) => {
     try {
 
-        const { token, internship } = req.body;
+        // ==========================================
+        // GET TOKEN FROM AUTHORIZATION HEADER
+        // ==========================================
 
-        // Check token
-        if (!token) {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
             return res.status(401).json({
                 message: "Please login first"
             });
         }
 
-        // Verify token
+        const token =
+            authHeader.startsWith("Bearer ")
+                ? authHeader.substring(7)
+                : authHeader;
+
+        // ==========================================
+        // VERIFY TOKEN
+        // ==========================================
+
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET
         );
 
-        // Only students can apply
+        // ==========================================
+        // ONLY STUDENTS CAN APPLY
+        // ==========================================
+
         if (decoded.role !== "student") {
             return res.status(403).json({
-                message: "Only students can apply for internships"
+                message:
+                    "Only students can apply for internships"
             });
         }
 
-        // Check internship ID
-        if (!internship) {
+        // ==========================================
+        // GET INTERNSHIP ID
+        // ==========================================
+
+        const { internshipId } = req.body;
+
+        if (!internshipId) {
             return res.status(400).json({
-                message: "Internship is required"
+                message: "Internship ID is required"
             });
         }
 
-        // Find internship
+        // ==========================================
+        // FIND INTERNSHIP
+        // ==========================================
+
         const internshipData =
-            await Internship.findById(internship);
+            await Internship.findById(internshipId);
 
         if (!internshipData) {
             return res.status(404).json({
@@ -52,24 +75,34 @@ router.post("/apply", async (req, res) => {
             });
         }
 
-        // Only approved internships can receive applications
+        // ==========================================
+        // ONLY APPROVED INTERNSHIPS
+        // ==========================================
+
         if (internshipData.status !== "Approved") {
             return res.status(400).json({
-                message: "This internship is not available for applications"
+                message:
+                    "This internship is not available for applications"
             });
         }
 
-        // Check deadline
+        // ==========================================
+        // CHECK DEADLINE
+        // ==========================================
+
         if (
-            new Date(internshipData.deadline) <
-            new Date()
+            internshipData.deadline &&
+            new Date(internshipData.deadline) < new Date()
         ) {
             return res.status(400).json({
                 message: "Application deadline has passed"
             });
         }
 
-        // Check duplicate application
+        // ==========================================
+        // CHECK DUPLICATE APPLICATION
+        // ==========================================
+
         const existingApplication =
             await Application.findOne({
                 student: decoded.id,
@@ -78,11 +111,15 @@ router.post("/apply", async (req, res) => {
 
         if (existingApplication) {
             return res.status(400).json({
-                message: "You have already applied for this internship"
+                message:
+                    "You have already applied for this internship"
             });
         }
 
-        // Create application
+        // ==========================================
+        // CREATE APPLICATION
+        // ==========================================
+
         const application =
             new Application({
 
@@ -98,26 +135,56 @@ router.post("/apply", async (req, res) => {
 
         await application.save();
 
+        // ==========================================
+        // SUCCESS RESPONSE
+        // ==========================================
+
         res.status(201).json({
-            message: "Application submitted successfully",
+            message:
+                "Application submitted successfully",
+
             application
         });
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "APPLICATION ERROR:",
+            error
+        );
+
+        // ==========================================
+        // INVALID / EXPIRED TOKEN
+        // ==========================================
 
         if (
             error.name === "JsonWebTokenError" ||
             error.name === "TokenExpiredError"
         ) {
             return res.status(401).json({
-                message: "Invalid or expired token"
+                message:
+                    "Invalid or expired token"
             });
         }
 
+        // ==========================================
+        // INVALID MONGODB ID
+        // ==========================================
+
+        if (error.name === "CastError") {
+            return res.status(400).json({
+                message:
+                    "Invalid internship ID"
+            });
+        }
+
+        // ==========================================
+        // SERVER ERROR
+        // ==========================================
+
         res.status(500).json({
-            message: "Server error"
+            message:
+                "Server error"
         });
     }
 });
@@ -135,7 +202,8 @@ router.get("/my-applications", async (req, res) => {
 
         if (!authHeader) {
             return res.status(401).json({
-                message: "Please login first"
+                message:
+                    "Please login first"
             });
         }
 
@@ -150,12 +218,20 @@ router.get("/my-applications", async (req, res) => {
                 process.env.JWT_SECRET
             );
 
-        // Only students
+        // ==========================================
+        // ONLY STUDENTS
+        // ==========================================
+
         if (decoded.role !== "student") {
             return res.status(403).json({
-                message: "Access denied"
+                message:
+                    "Access denied"
             });
         }
+
+        // ==========================================
+        // GET APPLICATIONS
+        // ==========================================
 
         const applications =
             await Application.find({
@@ -177,19 +253,24 @@ router.get("/my-applications", async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "MY APPLICATIONS ERROR:",
+            error
+        );
 
         if (
             error.name === "JsonWebTokenError" ||
             error.name === "TokenExpiredError"
         ) {
             return res.status(401).json({
-                message: "Invalid or expired token"
+                message:
+                    "Invalid or expired token"
             });
         }
 
         res.status(500).json({
-            message: "Server error"
+            message:
+                "Server error"
         });
     }
 });
@@ -207,7 +288,8 @@ router.get("/company-applications", async (req, res) => {
 
         if (!authHeader) {
             return res.status(401).json({
-                message: "Please login first"
+                message:
+                    "Please login first"
             });
         }
 
@@ -222,12 +304,20 @@ router.get("/company-applications", async (req, res) => {
                 process.env.JWT_SECRET
             );
 
-        // Only companies
+        // ==========================================
+        // ONLY COMPANIES
+        // ==========================================
+
         if (decoded.role !== "company") {
             return res.status(403).json({
-                message: "Only companies can view applications"
+                message:
+                    "Only companies can view applications"
             });
         }
+
+        // ==========================================
+        // GET COMPANY APPLICATIONS
+        // ==========================================
 
         const applications =
             await Application.find({
@@ -249,19 +339,24 @@ router.get("/company-applications", async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "COMPANY APPLICATIONS ERROR:",
+            error
+        );
 
         if (
             error.name === "JsonWebTokenError" ||
             error.name === "TokenExpiredError"
         ) {
             return res.status(401).json({
-                message: "Invalid or expired token"
+                message:
+                    "Invalid or expired token"
             });
         }
 
         res.status(500).json({
-            message: "Server error"
+            message:
+                "Server error"
         });
     }
 });
@@ -279,7 +374,8 @@ router.put("/status/:id", async (req, res) => {
 
         if (!authHeader) {
             return res.status(401).json({
-                message: "Please login first"
+                message:
+                    "Please login first"
             });
         }
 
@@ -294,16 +390,23 @@ router.put("/status/:id", async (req, res) => {
                 process.env.JWT_SECRET
             );
 
-        // Only companies
+        // ==========================================
+        // ONLY COMPANIES
+        // ==========================================
+
         if (decoded.role !== "company") {
             return res.status(403).json({
-                message: "Only companies can update applications"
+                message:
+                    "Only companies can update applications"
             });
         }
 
+        // ==========================================
+        // GET STATUS
+        // ==========================================
+
         const { status } = req.body;
 
-        // Allowed statuses
         const allowedStatuses = [
             "Shortlisted",
             "Rejected",
@@ -312,11 +415,15 @@ router.put("/status/:id", async (req, res) => {
 
         if (!allowedStatuses.includes(status)) {
             return res.status(400).json({
-                message: "Invalid application status"
+                message:
+                    "Invalid application status"
             });
         }
 
-        // Find application belonging to this company
+        // ==========================================
+        // FIND APPLICATION
+        // ==========================================
+
         const application =
             await Application.findOne({
                 _id: req.params.id,
@@ -325,34 +432,46 @@ router.put("/status/:id", async (req, res) => {
 
         if (!application) {
             return res.status(404).json({
-                message: "Application not found"
+                message:
+                    "Application not found"
             });
         }
+
+        // ==========================================
+        // UPDATE STATUS
+        // ==========================================
 
         application.status = status;
 
         await application.save();
 
         res.json({
-            message: "Application status updated successfully",
+            message:
+                "Application status updated successfully",
+
             application
         });
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "UPDATE APPLICATION ERROR:",
+            error
+        );
 
         if (
             error.name === "JsonWebTokenError" ||
             error.name === "TokenExpiredError"
         ) {
             return res.status(401).json({
-                message: "Invalid or expired token"
+                message:
+                    "Invalid or expired token"
             });
         }
 
         res.status(500).json({
-            message: "Server error"
+            message:
+                "Server error"
         });
     }
 });
