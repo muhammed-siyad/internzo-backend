@@ -4,7 +4,6 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
 
-
 // ==================================================
 // LOAD ENVIRONMENT VARIABLES
 // ==================================================
@@ -13,13 +12,11 @@ dotenv.config({
     path: path.join(__dirname, ".env")
 });
 
-
 // ==================================================
 // CREATE APP
 // ==================================================
 
 const app = express();
-
 
 // ==================================================
 // MIDDLEWARE
@@ -35,24 +32,16 @@ app.use(
     })
 );
 
-
 // ==================================================
 // DATABASE
 // ==================================================
 
-const MONGO_URI =
-    process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-
-    console.error(
-        "MONGO_URI is not defined"
-    );
-
+    console.error("MONGO_URI is not defined");
     process.exit(1);
-
 }
-
 
 // ==================================================
 // ROUTES
@@ -73,6 +62,16 @@ const internshipRoutes =
 const companyProfileRoutes =
     require("./routes/companyProfile");
 
+// ==================================================
+// DIRECT DEPLOYMENT TEST
+// ==================================================
+
+app.get("/direct-test", (req, res) => {
+    res.json({
+        message: "DIRECT SERVER.JS IS WORKING",
+        version: "DIRECT-TEST-2026"
+    });
+});
 
 // ==================================================
 // API ROUTES
@@ -103,32 +102,22 @@ app.use(
     companyProfileRoutes
 );
 
-
 // ==================================================
 // ROOT TEST ROUTE
 // ==================================================
 
 app.get("/", (req, res) => {
-
     res.json({
-
-        message:
-            "INTERNZO API is running!",
-
-        version:
-            "DELETE-ROUTE-TEST-2026"
-
+        message: "INTERNZO API is running!",
+        version: "DELETE-ROUTE-TEST-2026"
     });
-
 });
-
 
 // ==================================================
 // 404 ROUTE
 // ==================================================
 
 app.use((req, res) => {
-
     console.log(
         "404 ROUTE:",
         req.method,
@@ -136,20 +125,11 @@ app.use((req, res) => {
     );
 
     res.status(404).json({
-
-        message:
-            "Route not found",
-
-        method:
-            req.method,
-
-        path:
-            req.originalUrl
-
+        message: "Route not found",
+        method: req.method,
+        path: req.originalUrl
     });
-
 });
-
 
 // ==================================================
 // MONGODB CONNECTION
@@ -157,13 +137,11 @@ app.use((req, res) => {
 
 mongoose
     .connect(MONGO_URI)
-
     .then(() => {
 
         console.log(
             "MongoDB connected successfully"
         );
-
 
         // ==================================================
         // START SERVER
@@ -171,7 +149,6 @@ mongoose
 
         const PORT =
             process.env.PORT || 5000;
-
 
         app.listen(
             PORT,
@@ -185,7 +162,6 @@ mongoose
         );
 
     })
-
     .catch((error) => {
 
         console.error(
